@@ -1,0 +1,7 @@
+# Bibliotecas principais para o Lab-AI Hub CLI e Proxy
+litellm[proxy]
+openai
+click
+requests
+pydantic
+python-dotenv
