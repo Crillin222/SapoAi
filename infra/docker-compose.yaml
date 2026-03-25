@@ -1,0 +1,36 @@
+services:
+  # Redis for API Key persistence and rate limiting
+  redis:
+    image: redis:alpine
+    container_name: sapo-redis
+    restart: always
+    networks:
+      - sapo-net
+    volumes:
+      - sapo-redis-data:/data
+
+  # Sapo AI Gateway (LiteLLM Proxy)
+  gateway:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: sapo-gateway
+    restart: always
+    ports:
+      - "4000:4000"
+    networks:
+      - sapo-net
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MASTER_KEY=sk-sapo-admin-123
+    volumes:
+      - ./litellm_config.yaml:/app/config.yaml
+    command: [ "--config", "/app/config.yaml" ]
+
+networks:
+  sapo-net:
+    driver: bridge
+
+volumes:
+  sapo-redis-data:

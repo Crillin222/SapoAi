@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+.env
+
+# Infrastructure & Models
+models/*.gguf
+models/*.bin
+scripts/wheels/*.whl
+.DS_Store
+
+# IDEs
+.vscode/
+.idea/
