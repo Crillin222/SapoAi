@@ -1,19 +1,29 @@
 model_list:
-  # Reasoning/Chat Model
-  - model_name: sapo-chat
+  # Maestro: General Reasoning & Routing (Llama 3.1 8B)
+  - model_name: sapo-maestro
     litellm_params:
-      model: openai/sapo-chat
+      model: openai/sapo-maestro
       api_base: http://host.docker.internal:8080/v1
       api_key: sk-ignored
       temperature: 0.2
       max_tokens: 4096
 
-  # Coding/Task Model
-  - model_name: sapo-code
+  # General: Fast Chat & Creative Tasks (Qwen 2.5 7B)
+  - model_name: sapo-general
     litellm_params:
-      model: openai/sapo-code
+      model: openai/sapo-general
       api_base: http://host.docker.internal:8081/v1
-      temperature: 0.0
+      api_key: sk-ignored
+      temperature: 0.7 # Slightly higher for creativity
+      max_tokens: 4096
+
+  # Coder: Logic, Automation & Scripts (Qwen 2.5 Coder 7B/32B)
+  - model_name: sapo-coder
+    litellm_params:
+      model: openai/sapo-coder
+      api_base: http://host.docker.internal:8082/v1
+      api_key: sk-ignored
+      temperature: 0.0 # Deterministic for logic
       frequency_penalty: 0.05
       max_tokens: 8192
 
@@ -24,7 +34,7 @@ router_settings:
 litellm_settings:
   drop_params: true
   set_verbose: true
+  disable_token_counter: true 
 
 general_settings:
-  master_key: sk-sapo-admin-123
-  database_type: redis
+  master_key: sk-sapo-123 

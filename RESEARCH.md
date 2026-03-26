@@ -28,16 +28,26 @@ A visão mudou de um simples servidor para uma **Infraestrutura de IA Privada** 
 - **Open WebUI:** Interface principal para usuários não-técnicos. Suporte nativo a RAG (Retrieval Augmented Generation) e gerenciamento de documentos.
 - **Sapo CLI:** Ferramenta de diagnóstico e automação rápida via terminal.
 
-## 🧠 Estratégias Anti-Alucinação (Grounding)
-1. **System Prompts de Baixa Temperatura:** Configurar `temperature: 0.0` para tarefas técnicas e de código.
-2. **RAG Local:** Uso de ferramentas como **Docling** para ingestão de documentos e **Qdrant** ou o RAG nativo do Open WebUI para fornecer contexto real à IA.
-3. **Chain of Thought (CoT):** Instruir o modelo (via System Prompt) a "pensar passo a passo" antes de fornecer a resposta final.
+## 🧠 Model Strategy: The Maestro Pattern
+To ensure Sapo AI is a versatile generalist assistant, we employ a delegation architecture:
 
-## 🛠️ Ferramentas Complementares
-- **n8n (Self-hosted):** Para criar fluxos de automação agêntica visual (ex: IA lê log -> identifica erro -> abre ticket).
-- **Claude Code / OpenCode:** Para execução de comandos de terminal e correções automáticas de arquivos.
+1. **The Maestro (General Reasoning & Routing):** 
+   - **Model:** **Llama-3.1-8B-Instruct**. 
+   - **Role:** The primary interface. It handles intent classification, reasoning, and determines if a specialist worker is needed for specific tasks (recipes, jokes, code).
+2. **The Specialists (Task Workers):**
+   - **Qwen2.5-7B-Instruct:** For creative writing, fast chat, and general knowledge.
+   - **Qwen2.5-Coder-7B-Instruct:** For technical logic, automation scripts, and structured data tasks.
 
-## 📍 Lições Aprendidas dos Vídeos
-- **Não use modelos < 7B para tarefas complexas:** Eles alucinam demais em lógica.
-- **Separe o Autocomplete do Chat:** Use modelos ultra-leves (1.5B) para predição de texto em tempo real para não sobrecarregar o CPU.
-- **Quantização é sua amiga:** Q4_K_M é o "sweet spot" entre inteligência e consumo de memória.
+## 🧠 Anti-Hallucination Strategies (Grounding)
+1. **Low Temperature System Prompts:** Set `temperature: 0.0` for technical/deterministic tasks.
+2. **Local RAG:** Use tools like **Docling** for document ingestion and **Qdrant** (or Open WebUI's native RAG) to provide real-world context.
+3. **Chain of Thought (CoT):** Instruct the model (via System Prompt) to "think step-by-step" before providing the final answer.
+
+## 🛠️ Complementary Tools
+- **n8n (Self-hosted):** For visual agentic automation flows.
+- **Claude Code / OpenCode:** For terminal command execution and automatic file editing.
+
+## 📍 Lessons Learned & Technical Benchmarks
+- **Model Size:** Do not use models < 7B for complex reasoning; they hallucinate logic patterns.
+- **Task Separation:** Separate autocomplete from chat. Use ultra-light models (1.5B) for real-time text prediction to save CPU.
+- **Quantization:** Q4_K_M is the "sweet spot" between intelligence and memory usage.

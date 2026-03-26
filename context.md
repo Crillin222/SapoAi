@@ -3,13 +3,14 @@
 ## 🎯 Objetivo
 Prover um ecossistema de IA **Agêntico**, privado, seguro e totalmente offline. O Sapo AI não é apenas um chat, mas um assistente capaz de interpretar problemas, propor soluções e executar tarefas (via ferramentas integradas), garantindo a soberania dos dados em ambientes restritos.
 
-## 🧠 Visão de Produto (Agente vs Chat)
-Diferente de uma IA de chat comum que apenas "responde", o Sapo AI busca a experiência de um **Agente Orquestrado**:
-1.  **Arquitetura de Delegação:** Uso de um modelo "Maestro" (Reasoning) para planejar e modelos "Trabalhadores" (Coding/Tools) para executar sub-tarefas.
-2.  **Integração com Aider:** Uso do Aider como motor de edição de código e gestão de contexto (repo-map), mitigando falhas de ferramentas (tools) em modelos menores.
-3.  **Ação (OpenCode/Tools):** Foco em modelos que suportem nativamente Function Calling ou formatos de edição robustos (Diff/Whole).
+## 🧠 Product Vision (Maestro Agent Architecture)
+Sapo AI is designed as a **Universal Local AI Provider** using a Master/Worker pattern:
+1.  **Maestro Mode:** A central "Brain" (Llama 3.1) receives all general inquiries. It interprets the user's intent—whether it's a joke, a recipe, or a complex logic problem.
+2.  **Delegation:** For specialized tasks (like deep coding or data analysis), the Maestro or the Gateway routes the request to dedicated worker models (e.g., Qwen 2.5 Coder).
+3.  **Tool Integration:** Seamless compatibility with Aider, Continue, and WebUIs via a standard OpenAI-compatible API.
 
-## 🛠️ Restrições e Arquitetura Crítica
+## 🛠️ Critical Constraints & Architecture
+
 1.  **Ambiente Air-Gapped:** Sem `pip install` ou `ollama pull` em tempo real. Tudo via `.whl` e modelos GGUF manuais.
 2.  **Hardware & Performance:**
     *   **Foco em CPU:** Para notebooks corporativos sem GPU, priorizar `llama.cpp` com quantização avançada (GGUF) para reduzir alucinações e aumentar a velocidade de inferência em relação ao Ollama padrão.
@@ -35,7 +36,12 @@ Diferente de uma IA de chat comum que apenas "responde", o Sapo AI busca a exper
 3.  **Próximo Passo:** Validar a subida dos containers Docker e iniciar a CLI de conexão em `app/main.py`.
 
 ## 🛠️ Stack Consolidada
-- **Gateway:** LiteLLM Proxy (Porta 4000) com Master Key.
+- **Gateway:** LiteLLM Proxy (Porta 4000) with Master Key.
 - **Banco de Dados:** Redis (Persistência de chaves e logs).
 - **Motor de Inferência:** llama.cpp (CPU/Híbrido) ou vLLM (GPU Pop!_OS).
 - **Orquestração:** Docker Compose.
+
+## 🗣️ Communication Preference
+- **Language:** Conversation is in Brazilian Portuguese.
+- **Project Files:** Code, documentation, and technical configs are in English.
+

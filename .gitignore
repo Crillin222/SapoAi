@@ -10,6 +10,7 @@ ENV/
 # Infrastructure & Models
 models/*.gguf
 models/*.bin
+engines/
 scripts/wheels/*.whl
 .DS_Store
 
