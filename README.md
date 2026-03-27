@@ -23,45 +23,43 @@ The system operates in three distinct layers:
 
 ---
 
-## 🐧 Setup Guide: Pop!_OS (Production Server)
+## 🛰️ Air-Gapped Deployment Guide (Pop!_OS Server)
 
-This guide assumes a dedicated server running **Pop!_OS** with an NVIDIA GPU (e.g., 6GB VRAM).
+Follow these steps when deploying in a highly restricted network without internet access.
 
-### 1. OS & Driver Preparation
-Pop!_OS comes with NVIDIA drivers out of the box. Ensure they are up to date:
-```bash
-sudo apt update && sudo apt full-upgrade -y
-```
+### Phase 1: Preparation (Machine with Internet)
+1. **Download NVIDIA Quadro Drivers:**
+   - Go to NVIDIA's website and download the `.run` file for your specific Quadro card (Linux 64-bit).
+2. **Download Docker and NVIDIA Toolkit Packages:**
+   - Download the `.deb` files for `docker.io`, `docker-compose`, and `nvidia-container-toolkit`.
+3. **Export Sapo AI Engine (llama.cpp CUDA):**
+   - Pull the image: `docker pull ghcr.io/ggerganov/llama.cpp:server-cuda`
+   - Save to disk: `docker save ghcr.io/ggerganov/llama.cpp:server-cuda > llama_cuda.tar`
+4. **Copy all assets to a USB Drive:**
+   - Your Sapo AI repository.
+   - The `.run` driver.
+   - The `.deb` bundles.
+   - The `llama_cuda.tar` image.
+   - Your `.gguf` model files.
 
-### 2. Install Docker & NVIDIA Container Toolkit
-```bash
-# Install Docker
-sudo apt install -y docker.io docker-compose
-sudo usermod -aG docker $USER
+### Phase 2: Server Installation (Offline)
+1. **Install NVIDIA Drivers:**
+   - `sudo systemctl stop gdm3` (Stops the UI).
+   - `sudo sh ./NVIDIA-Linux-x86_64-XXX.XX.run`
+   - Follow prompts, then `sudo reboot`.
+2. **Install Docker & Toolkit:**
+   - `sudo dpkg -i *.deb` (from your deb folder).
+   - `sudo nvidia-ctk runtime configure --runtime=docker`
+   - `sudo systemctl restart docker`
+3. **Import Engine Image:**
+   - `docker load -i llama_cuda.tar`
 
-# Install NVIDIA Toolkit for Docker
-curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-# (Follow official NVIDIA instructions to add the repo and install)
-sudo apt-get install -y nvidia-container-toolkit
-sudo systemctl restart docker
-```
-
-### 3. Engine Setup (llama.cpp)
-1. Download the latest Linux `llama.cpp` binaries to the `engines/` directory.
-2. Ensure the binary is executable: `chmod +x engines/llama-server`.
-
-### 4. Deploy Sapo AI
-1. **Clone & Configuration:**
-   - Clone this repository.
-   - Place your `.gguf` models in the `models/` directory.
-2. **Launch the Gateway:**
+### Phase 3: Launch
+1. **Start Infrastructure:** `cd infra && docker-compose up -d`
+2. **Start Inference Engine:**
+   - Instead of local python script, use the pre-loaded Docker image:
    ```bash
-   cd infra
-   docker-compose up -d
-   ```
-3. **Start the Engines:**
-   ```bash
-   python3 scripts/start_engines.py
+   docker run -d --name sapo-engine --gpus all -p 8080:8080 -v /path/to/models:/models ghcr.io/ggerganov/llama.cpp:server-cuda -m /models/Llama-3.1-8B-Instruct-Q5_K_M.gguf --port 8080 --host 0.0.0.0 --n-gpu-layers 99
    ```
 
 ---

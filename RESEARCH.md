@@ -28,6 +28,23 @@ A visão mudou de um simples servidor para uma **Infraestrutura de IA Privada** 
 - **Open WebUI:** Interface principal para usuários não-técnicos. Suporte nativo a RAG (Retrieval Augmented Generation) e gerenciamento de documentos.
 - **Sapo CLI:** Ferramenta de diagnóstico e automação rápida via terminal.
 
+## 🛰️ Air-Gapped Deployment Strategy
+Lessons learned from deploying in high-security, no-internet environments (Pop!_OS + NVIDIA Quadro):
+
+### 1. NVIDIA Driver Sideloading (The .run Method)
+- **Challenge:** NVIDIA Quadro cards in professional workstations often require specific stable drivers not found in standard "Gaming" ISOs.
+- **Solution:** Use the **Official NVIDIA .run installer**.
+- **Pre-requisite:** Disable the `nouveau` driver and stop the display manager (`gdm` or `gdm3`) before installation.
+
+### 2. Pre-built Engine (The Docker Sideloading Method)
+- **Challenge:** Compiling `llama.cpp` with CUDA support requires a complex toolchain (GCC, CMake, CUDA Toolkit) that is difficult to replicate offline.
+- **Solution:** **Docker Save/Load**.
+- **Benefit:** Docker containers bundle the exact OS, CUDA version, and pre-compiled binaries, ensuring "write once, run anywhere" performance on the server.
+
+### 3. Dependency Management (The .deb Bundle)
+- **Requirement:** The `nvidia-container-toolkit` is the bridge between Docker and the GPU. It must be downloaded as a bundle of `.deb` packages for the specific Pop!_OS version.
+- **Critical:** Required for Docker to access GPU resources. Must be manually downloaded as a bundle of `.deb` packages for the specific Ubuntu/Pop!_OS version.
+
 ## 🧠 Model Strategy: The Maestro Pattern
 To ensure Sapo AI is a versatile generalist assistant, we employ a delegation architecture:
 
