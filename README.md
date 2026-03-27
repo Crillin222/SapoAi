@@ -7,104 +7,68 @@ Sapo AI is a high-performance, private, and offline-first AI ecosystem designed 
 ## 🚀 Key Features
 
 - **Unified AI Gateway:** A single endpoint for multiple local LLM backends (llama.cpp, vLLM, Ollama).
-- **Maestro Architecture:** A "Brain" (Llama 3.1) routes general inquiries and delegates complex tasks to specialized workers (Qwen 2.5 Coder).
+- **Maestro Architecture:** A "Maestro" model (Reasoning-focused) routes inquiries and delegates complex tasks to specialized workers (Coding/Logic-focused).
 - **Enterprise Governance:** API Key management and token tracking powered by LiteLLM and Redis.
-- **Offline First:** Designed for air-gapped networks with support for manual model transfers and offline dependency management.
-- **Optimized for CPU/GPU:** Adaptive inference supporting Full GPU Offloading or High-Performance CPU/Hybrid modes.
+- **Offline-First Resilience:** Architecture optimized for air-gapped networks with support for manual model transfers and offline dependency management.
+- **Heterogeneous Hardware Support:** Adaptive inference supporting GPU Acceleration (CUDA) or high-performance CPU/Hybrid modes.
 
 ---
 
 ## 🏗️ Architecture
 
 The system operates in three distinct layers:
-1. **Inference Layer:** Multiple `llama-server` instances running quantized GGUF models.
-2. **Gateway Layer:** LiteLLM Proxy acting as a router, authenticator, and request translator.
-3. **Client Layer:** Industry-standard tools like VS Code (Continue), Aider, and Open WebUI.
+1. **Inference Layer:** Multiple inference engine instances (e.g., llama.cpp) running quantized GGUF models.
+2. **Gateway Layer:** LiteLLM Proxy acting as a central router, authenticator, and request translator.
+3. **Client Layer:** Integration with industry-standard tools like VS Code (Continue), Aider, and Open WebUI.
 
 ---
 
-## 🛰️ Air-Gapped Deployment Guide (Pop!_OS Server)
+## 🛰️ Air-Gapped Deployment (Generic Linux)
 
-Follow these steps when deploying in a highly restricted network without internet access.
+This section covers the standard procedure for deploying Sapo AI in environments without active internet connections.
 
-### Phase 1: Preparation (Machine with Internet)
-1. **Download NVIDIA Quadro Drivers:**
-   - Go to NVIDIA's website and download the `.run` file for your specific Quadro card (Linux 64-bit).
-2. **Download Docker and NVIDIA Toolkit Packages:**
-   - Download the `.deb` files for `docker.io`, `docker-compose`, and `nvidia-container-toolkit`.
-3. **Export Sapo AI Engine (llama.cpp CUDA):**
-   - Pull the image: `docker pull ghcr.io/ggerganov/llama.cpp:server-cuda`
-   - Save to disk: `docker save ghcr.io/ggerganov/llama.cpp:server-cuda > llama_cuda.tar`
-4. **Copy all assets to a USB Drive:**
-   - Your Sapo AI repository.
-   - The `.run` driver.
-   - The `.deb` bundles.
-   - The `llama_cuda.tar` image.
-   - Your `.gguf` model files.
+### Phase 1: Preparation (Connected Environment)
+1. **Model Acquisition:** Download required `.gguf` models (e.g., Llama 3.1, Qwen 2.5) from trusted sources like Hugging Face or ModelScope.
+2. **Container Sideloading:**
+   - Pull the required inference engine image: `docker pull ghcr.io/ggerganov/llama.cpp:server-cuda`
+   - Export the image to a portable archive: `docker save ghcr.io/ggerganov/llama.cpp:server-cuda > llama_cuda.tar`
+3. **Dependency Bundling:** Collect necessary `.deb` packages for Docker, Docker Compose, and the NVIDIA Container Toolkit for the target OS version.
 
-### Phase 2: Server Installation (Offline)
-1. **Install NVIDIA Drivers:**
-   - `sudo systemctl stop gdm3` (Stops the UI).
-   - `sudo sh ./NVIDIA-Linux-x86_64-XXX.XX.run`
-   - Follow prompts, then `sudo reboot`.
-2. **Install Docker & Toolkit:**
-   - `sudo dpkg -i *.deb` (from your deb folder).
-   - `sudo nvidia-ctk runtime configure --runtime=docker`
-   - `sudo systemctl restart docker`
-3. **Import Engine Image:**
-   - `docker load -i llama_cuda.tar`
-
-### Phase 3: Launch
-1. **Start Infrastructure:** `cd infra && docker-compose up -d`
-2. **Start Inference Engine:**
-   - Instead of local python script, use the pre-loaded Docker image:
+### Phase 2: Implementation (Target Environment)
+1. **Driver Installation:** Ensure compatible NVIDIA drivers are installed using the official `.run` installer if repository access is unavailable.
+2. **Service Initialization:**
+   - Install Docker components: `sudo dpkg -i *.deb`
+   - Load the engine image: `docker load -i llama_cuda.tar`
+   - Start the gateway infrastructure: `cd infra && docker-compose up -d`
+3. **Engine Launch:** Deploy the inference engine container:
    ```bash
-   docker run -d --name sapo-engine --gpus all -p 8080:8080 -v /path/to/models:/models ghcr.io/ggerganov/llama.cpp:server-cuda -m /models/Llama-3.1-8B-Instruct-Q5_K_M.gguf --port 8080 --host 0.0.0.0 --n-gpu-layers 99
+   docker run -d --name sapo-engine --gpus all -p 8080:8080 -v /path/to/models:/models ghcr.io/ggerganov/llama.cpp:server-cuda -m /models/your-model.gguf --port 8080 --host 0.0.0.0 --n-gpu-layers 99
    ```
 
 ---
 
+## 🛠️ Troubleshooting & Workarounds
+
+### Restricted Network Issues
+- **Problem:** Standard package managers (`apt`, `pip`) fail due to firewall restrictions.
+- **Workaround:** Utilize the **Offline Sideloading** method described above. Pre-package all binaries and container images in a connected environment before transferring them via secure physical media.
+
+### GPU Detection in Containers
+- **Problem:** Docker containers fail to recognize the host GPU even with drivers installed.
+- **Workaround:** Verify the installation of the **NVIDIA Container Toolkit**. Execute `nvidia-smi` inside a test container (`docker run --rm --gpus all nvidia/cuda:12.0-base-ubuntu22.04 nvidia-smi`) to confirm the passthrough is functional.
+
+### Binary Compatibility
+- **Problem:** Pre-compiled binaries fail due to missing shared libraries or GLIBC version mismatches.
+- **Workaround:** Use **Docker-based Inference Engines**. Containers encapsulate the entire runtime environment, ensuring consistency across different Linux distributions regardless of the host's library versions.
+
+---
+
+## 📝 Implementation Note: Pop!_OS & NVIDIA Quadro
+During initial prototyping, the system was validated on **Pop!_OS** using **NVIDIA Quadro** series hardware. 
+- **Drivers:** Professional Quadro cards often require the stable branch of NVIDIA drivers. In air-gapped scenarios, the official `.run` installer is recommended over distribution-specific tools if the latter require internet-based dependency resolution.
+- **OS Choice:** Pop!_OS provides an excellent base for AI workloads due to its native NVIDIA support and optimized kernel, though the standard ISO may require manual driver injection for certain legacy or specialized Quadro hardware.
+
+---
+
 ## 💻 Client Configuration
-
-### VS Code (Continue Extension)
-Add the following to your `config.json`:
-```json
-{
-  "models": [
-    {
-      "title": "Sapo Maestro",
-      "model": "sapo-maestro",
-      "apiBase": "http://<SERVER_IP>:4000/v1",
-      "apiKey": "sk-sapo-123",
-      "provider": "openai"
-    },
-    {
-      "title": "Sapo Coder",
-      "model": "sapo-code",
-      "apiBase": "http://<SERVER_IP>:4000/v1",
-      "apiKey": "sk-sapo-123",
-      "provider": "openai"
-    }
-  ]
-}
-```
-
-### Aider (CLI)
-Run Aider pointing to the Sapo Gateway:
-```bash
-aider --openai-api-base http://<SERVER_IP>:4000/v1 --openai-api-key sk-sapo-123 --model sapo-code
-```
-
----
-
-## 📁 Project Structure
-
-- `app/`: Custom CLI and diagnostic tools.
-- `infra/`: Gateway configuration and Docker orchestration.
-- `models/`: Model storage (.gguf).
-- `engines/`: Inference engine binaries (llama-server).
-- `scripts/`: Automation and setup scripts.
-- `RESEARCH.md`: Technical benchmarks and architectural decisions.
-
----
-*Developed for high-security laboratory environments. Ensure compliance with internal IT policies.*
+*Follow standard OpenAI API integration for tools like Continue, Aider, and Open WebUI.*
